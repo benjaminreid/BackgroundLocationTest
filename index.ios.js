@@ -45,7 +45,11 @@ export default class BackgroundLocationTest extends Component {
       })(status);
 
       if (authorizationStatus == desiredStatus) {
+        console.log('Tracking started...');
         BackgroundGeolocation.start();
+      } else {
+        console.log('Tracking stopped...');
+        BackgroundGeolocation.stop();
       }
     });
 
