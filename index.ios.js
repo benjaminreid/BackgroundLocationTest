@@ -11,8 +11,49 @@ import {
   Text,
   View
 } from 'react-native';
+import BackgroundGeolocation from 'react-native-background-geolocation';
 
 export default class BackgroundLocationTest extends Component {
+  componentDidMount() {
+    const desiredStatus = 'WhenInUse';
+
+    BackgroundGeolocation.configure({
+      debug: true,
+      desiredAccuracy: 100,
+      distanceFilter: 100,
+      autoSync: false,
+      stopOnTerminate: false,
+      disableMotionActivityUpdates: true,
+      locationAuthorizationRequest: desiredStatus,
+    });
+
+    BackgroundGeolocation.on('location', (location) => {
+      console.log(location);
+    });
+
+    BackgroundGeolocation.on('providerchange', function({ status }) {
+      console.log('- providerchange', status)
+      const authorizationStatus = (function(status) {
+        switch(status) {
+          case BackgroundGeolocation.AUTHORIZATION_STATUS_ALWAYS:
+            return 'Always';
+          case BackgroundGeolocation.AUTHORIZATION_STATUS_WHEN_IN_USE:
+            return 'WhenInUse';
+          default:
+            return undefined;
+        }
+      })(status);
+
+      if (authorizationStatus == desiredStatus) {
+        BackgroundGeolocation.start();
+      }
+    });
+
+    BackgroundGeolocation.getCurrentPosition(location => {
+      console.log('- location', location)
+    });
+  }
+
   render() {
     return (
       <View style={styles.container}>
