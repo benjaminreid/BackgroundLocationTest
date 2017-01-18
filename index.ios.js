@@ -9,13 +9,32 @@ import {
   AppRegistry,
   StyleSheet,
   Text,
-  View
+  View,
+  TouchableOpacity,
 } from 'react-native';
 import BackgroundGeolocation from 'react-native-background-geolocation';
 
+function Button({ onPress, children }) {
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <Text>{children}</Text>
+    </TouchableOpacity>
+  );
+}
+
 export default class BackgroundLocationTest extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      enabled: false,
+    };
+  }
+
   componentDidMount() {
-    const desiredStatus = 'WhenInUse';
+    BackgroundGeolocation.on('location', (location) => {
+      console.log('location event', location);
+    });
 
     BackgroundGeolocation.configure({
       debug: true,
@@ -24,53 +43,37 @@ export default class BackgroundLocationTest extends Component {
       autoSync: false,
       stopOnTerminate: false,
       disableMotionActivityUpdates: true,
-      locationAuthorizationRequest: desiredStatus,
+      locationAuthorizationRequest: 'WhenInUse',
+    }, () => {
+      console.log('configuration complete...')
+      this.setState({ enabled: true });
     });
+  }
 
-    BackgroundGeolocation.on('location', (location) => {
-      console.log(location);
+  getLocation() {
+    BackgroundGeolocation.start(() => {
+      console.log('Tracking started...');
     });
+  }
 
-    BackgroundGeolocation.on('providerchange', function({ status }) {
-      console.log('- providerchange', status)
-      const authorizationStatus = (function(status) {
-        switch(status) {
-          case BackgroundGeolocation.AUTHORIZATION_STATUS_ALWAYS:
-            return 'Always';
-          case BackgroundGeolocation.AUTHORIZATION_STATUS_WHEN_IN_USE:
-            return 'WhenInUse';
-          default:
-            return undefined;
-        }
-      })(status);
+  stopTracking() {
 
-      if (authorizationStatus == desiredStatus) {
-        console.log('Tracking started...');
-        BackgroundGeolocation.start();
-      } else {
-        console.log('Tracking stopped...');
-        BackgroundGeolocation.stop();
-      }
-    });
-
-    BackgroundGeolocation.getCurrentPosition(location => {
-      console.log('- location', location)
+    BackgroundGeolocation.stop(() => {
+      console.log('Tracking stopped...');
     });
   }
 
   render() {
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit index.ios.js
-        </Text>
-        <Text style={styles.instructions}>
-          Press Cmd+R to reload,{'\n'}
-          Cmd+D or shake for dev menu
-        </Text>
+        {this.state.enabled ?
+          [
+            <Button key="1" onPress={this.getLocation}>Start tracking</Button>,
+            <Button key="2" onPress={this.stopTracking}>Stop tracking</Button>,
+          ]
+        :
+          <Text>Loading...</Text>
+        }
       </View>
     );
   }
